@@ -16,4 +16,9 @@ export default defineConfig({
     },
   },
   base: '/wsc-goods/',
+  server: {
+    historyApiFallback: {
+      index: '/wsc-goods/index.html'
+    }
+  }
 })

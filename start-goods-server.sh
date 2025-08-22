@@ -8,18 +8,27 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-# 2. Node.js, npm 설치 안내
+# 2. service-account.json 파일 체크 (SERVICE_ACCOUNT_KEY_PATH 환경변수 사용)
+SERVICE_ACCOUNT_KEY_PATH=$(grep SERVICE_ACCOUNT_KEY_PATH .env | cut -d '=' -f2 | tr -d '\r')
+if [ -z "$SERVICE_ACCOUNT_KEY_PATH" ]; then
+  SERVICE_ACCOUNT_KEY_PATH=./service-account.json
+fi
+if [ ! -f "$SERVICE_ACCOUNT_KEY_PATH" ]; then
+  echo "[ERROR] 서비스 계정 키 파일($SERVICE_ACCOUNT_KEY_PATH)이 없습니다. 관리자에게 문의하세요."
+  exit 1
+fi
+
+# 3. Node.js, npm 설치 안내
 echo "[INFO] Node.js와 npm이 설치되어 있어야 합니다. (node -v, npm -v로 확인)"
 
-# 3. 의존성 설치
+# 4. 의존성 설치
 echo "[INFO] npm install 실행..."
 npm install
 
-# 4. 서버 실행
+# 5. 서버 실행
 echo "[INFO] 서버를 실행합니다. (Ctrl+C로 중지)"
 node goods-server.js
 
 # 백그라운드 실행 예시:
 # nohup node goods-server.js &
 # 또는 pm2 사용 권장: pm2 start goods-server.js --name goods-server
-
