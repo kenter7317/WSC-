@@ -40,8 +40,11 @@ export default {
       try {
         await axios.post('http://localhost:3001/api/auth/request', { email: this.email });
         this.step = 2;
+        this.code = '';
       } catch (e) {
         this.error = e.response?.data?.error || '오류 발생';
+        // 차단/만료 등 에러 발생 시 인증코드 입력 단계로 진입하지 않음
+        this.step = 1;
       }
       this.loading = false;
     },
@@ -53,10 +56,13 @@ export default {
         this.step = 3;
       } catch (e) {
         this.error = e.response?.data?.error || '오류 발생';
+        // 인증 만료/차단 시 인증코드 입력 단계에서 벗어나도록
+        if (this.error.includes('만료') || this.error.includes('차단')) {
+          this.step = 1;
+        }
       }
       this.loading = false;
     }
   }
 };
 </script>
-

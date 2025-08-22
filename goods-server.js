@@ -238,13 +238,22 @@ app.post('/api/auth/request', async (req, res) => {
   if (!ALLOWED_EMAILS.includes(email)) return res.status(400).json({ error: '허용되지 않은 이메일입니다.' });
   const users = readUsers();
   let user = users.find(u => u.email === email);
+  const now = Date.now();
+  if (user && user.blockedUntil && user.blockedUntil > now) {
+    const min = Math.ceil((user.blockedUntil - now) / 60000);
+    return res.status(429).json({ error: `인증 시도 제한. ${min}분 후 다시 시도하세요.` });
+  }
   const code = generateCode();
+  const codeExpires = now + 5 * 60 * 1000; // 5분
   if (!user) {
-    user = { email, verified: false, code, selectedGoodId: null };
+    user = { email, verified: false, code, codeExpires, attempts: 0, blockedUntil: null, selectedGoodId: null };
     users.push(user);
   } else {
     user.code = code;
+    user.codeExpires = codeExpires;
     user.verified = false;
+    user.attempts = 0;
+    user.blockedUntil = null;
   }
   writeUsers(users);
   await sendMail(email, code);
@@ -256,9 +265,30 @@ app.post('/api/auth/verify', (req, res) => {
   const { email, code } = req.body;
   const users = readUsers();
   const user = users.find(u => u.email === email);
-  if (!user || user.code !== code) return res.status(400).json({ error: '인증 실패' });
+  const now = Date.now();
+  if (!user) return res.status(400).json({ error: '인증 실패' });
+  if (user.blockedUntil && user.blockedUntil > now) {
+    const min = Math.ceil((user.blockedUntil - now) / 60000);
+    return res.status(429).json({ error: `인증 시도 제한. ${min}분 후 다시 시도하세요.` });
+  }
+  if (!user.code || !user.codeExpires || user.codeExpires < now) {
+    return res.status(400).json({ error: '인증코드가 만료되었습니다. 다시 요청해 주세요.' });
+  }
+  if (user.code !== code) {
+    user.attempts = (user.attempts || 0) + 1;
+    if (user.attempts >= 5) {
+      user.blockedUntil = now + 10 * 60 * 1000; // 10분 차단
+      writeUsers(users);
+      return res.status(429).json({ error: '인증 5회 실패로 10분간 차단되었습니다.' });
+    }
+    writeUsers(users);
+    return res.status(400).json({ error: `인증 실패. 남은 시도: ${5 - user.attempts}` });
+  }
   user.verified = true;
   user.code = null;
+  user.codeExpires = null;
+  user.attempts = 0;
+  user.blockedUntil = null;
   writeUsers(users);
   res.json({ ok: true });
 });
