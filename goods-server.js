@@ -56,30 +56,32 @@ function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Gmail API 기반 인증 메일 발송
+// Gmail 서비스 계정 기반 인증 메일 발송
 async function sendMail(email, code) {
-  const oAuth2Client = new google.auth.OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET
-  );
-  oAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
-  const accessToken = await oAuth2Client.getAccessToken();
-  const transporter = require('nodemailer').createTransport({
-    service: 'gmail',
-    auth: {
-      type: 'OAuth2',
-      user: process.env.GMAIL_SENDER,
-      clientId: process.env.GMAIL_CLIENT_ID,
-      clientSecret: process.env.GMAIL_CLIENT_SECRET,
-      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-      accessToken: accessToken.token
-    }
+  const keyPath = process.env.SERVICE_ACCOUNT_KEY_PATH;
+  const sender = process.env.GMAIL_SENDER;
+  const key = require(keyPath);
+  const jwtClient = new google.auth.JWT({
+    email: key.client_email,
+    key: key.private_key,
+    scopes: ['https://www.googleapis.com/auth/gmail.send'],
+    subject: sender // 실제 발신자(조직 내 사용자)
   });
-  await transporter.sendMail({
-    from: `굿즈 수량조사 <${process.env.GMAIL_SENDER}>`,
-    to: email,
-    subject: '[굿즈 수량조사] 인증코드 안내',
-    text: `인증코드: ${code}\n\n굿즈 수량조사 서비스에 인증코드를 입력해 주세요.`
+  const gmail = google.gmail({ version: 'v1', auth: jwtClient });
+  const message = [
+    `From: 굿즈 수량조사 <${sender}>`,
+    `To: ${email}`,
+    'Content-Type: text/plain; charset=utf-8',
+    'MIME-Version: 1.0',
+    'Subject: =?UTF-8?B?' + Buffer.from('[굿즈 수량조사] 인증코드 안내').toString('base64') + '?=',
+    '',
+    `인증코드: ${code}\n\n굿즈 수량조사 서비스에 인증코드를 입력해 주세요.`
+  ].join('\r\n');
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    }
   });
 }
 
