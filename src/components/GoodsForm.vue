@@ -43,13 +43,13 @@ export default {
   methods: {
     async fetchGoods() {
       this.loading = true;
-      const res = await axios.get('http://localhost:3001/api/goods');
+      const res = await axios.get('http://localhost:3001/wsc-goods/api/goods');
       this.goods = res.data;
       this.loading = false;
     },
     async fetchUser() {
       if (!this.email) return;
-      const res = await axios.get('http://localhost:3001/api/user/status', { params: { email: this.email } });
+      const res = await axios.get('http://localhost:3001/wsc-goods/api/user/status', { params: { email: this.email } });
       if (res.data.selectedGoodId) {
         this.selectedGood = this.goods.find(g => g.id === res.data.selectedGoodId);
       }
@@ -58,7 +58,7 @@ export default {
       this.message = '';
       this.error = false;
       try {
-        const res = await axios.post('http://localhost:3001/api/goods/select', { email: this.email, goodId: this.selectedId });
+        const res = await axios.post('http://localhost:3001/wsc-goods/api/goods/select', { email: this.email, goodId: this.selectedId });
         this.message = '굿즈가 성공적으로 선택되었습니다!';
         await this.fetchGoods();
         await this.fetchUser();

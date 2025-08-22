@@ -37,11 +37,10 @@ export default {
   methods: {
     async fetchResults() {
       this.loading = true;
-      const res = await axios.get('http://localhost:3001/api/results');
+      const res = await axios.get('http://localhost:3001/wsc-goods/api/results');
       this.goods = res.data;
       this.loading = false;
     }
   }
 };
 </script>
-

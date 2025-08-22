@@ -38,7 +38,7 @@ export default {
       this.loading = true;
       this.error = '';
       try {
-        await axios.post('http://localhost:3001/api/auth/request', { email: this.email });
+        await axios.post('http://localhost:3001/wsc-goods/api/auth/request', { email: this.email });
         this.step = 2;
         this.code = '';
       } catch (e) {
@@ -52,7 +52,7 @@ export default {
       this.loading = true;
       this.error = '';
       try {
-        await axios.post('http://localhost:3001/api/auth/verify', { email: this.email, code: this.code });
+        await axios.post('http://localhost:3001/wsc-goods/api/auth/verify', { email: this.email, code: this.code });
         this.step = 3;
       } catch (e) {
         this.error = e.response?.data?.error || '오류 발생';

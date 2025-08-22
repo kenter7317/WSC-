@@ -84,13 +84,13 @@ async function sendMail(email, code) {
 }
 
 // 굿즈 목록 조회
-app.get('/api/goods', (req, res) => {
+app.get('/wsc-goods/api/goods', (req, res) => {
   const data = readData();
   res.json(data.goods);
 });
 
 // 굿즈 수량 입력(증가)
-app.post('/api/goods/:id', (req, res) => {
+app.post('/wsc-goods/api/goods/:id', (req, res) => {
   const { id } = req.params;
   const { count } = req.body;
   const data = readData();
@@ -102,7 +102,7 @@ app.post('/api/goods/:id', (req, res) => {
 });
 
 // 전체 결과 조회
-app.get('/api/results', (req, res) => {
+app.get('/wsc-goods/api/results', (req, res) => {
   const data = readData();
   res.json(data.goods);
 });
@@ -232,7 +232,7 @@ const ALLOWED_EMAILS = [
 ];
 
 // 인증코드 요청
-app.post('/api/auth/request', async (req, res) => {
+app.post('/wsc-goods/api/auth/request', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: '이메일 필요' });
   if (!ALLOWED_EMAILS.includes(email)) return res.status(400).json({ error: '허용되지 않은 이메일입니다.' });
@@ -261,7 +261,7 @@ app.post('/api/auth/request', async (req, res) => {
 });
 
 // 인증코드 확인
-app.post('/api/auth/verify', (req, res) => {
+app.post('/wsc-goods/api/auth/verify', (req, res) => {
   const { email, code } = req.body;
   const users = readUsers();
   const user = users.find(u => u.email === email);
@@ -294,7 +294,7 @@ app.post('/api/auth/verify', (req, res) => {
 });
 
 // 유저 상태 조회
-app.get('/api/user/status', (req, res) => {
+app.get('/wsc-goods/api/user/status', (req, res) => {
   const { email } = req.query;
   const users = readUsers();
   const user = users.find(u => u.email === email);
@@ -303,7 +303,7 @@ app.get('/api/user/status', (req, res) => {
 });
 
 // 굿즈 선택(선착순)
-app.post('/api/goods/select', (req, res) => {
+app.post('/wsc-goods/api/goods/select', (req, res) => {
   const { email, goodId } = req.body;
   const users = readUsers();
   const user = users.find(u => u.email === email);
